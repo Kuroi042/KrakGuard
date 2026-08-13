@@ -24,6 +24,8 @@ current_frame = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
 out = cv2.VideoWriter('out.mp4',
                 fourcc,
                 fps,(width,height) )
+frame_id = 0
+
 while True:
     ret, frame =  cap.read()
     if not ret :
@@ -34,15 +36,17 @@ while True:
                 cv2.FONT_HERSHEY_SIMPLEX,1,
                  (200,0,0,),2,cv2.LINE_AA)
 
-    result =  model.track(frame,persist=True) #*on the current frame
-    for c  in result[0].boxes:
-        index = int(c)
-        classid =  
+    results =  model.track(frame,persist=True) #*on the current frame
 
-    new_frame =  result[0].plot()
+    for c in results[0].boxes.cls:
+        index=int(c)
+        classes =  class_name[index]
+        print(f"frame {frame_id} | {classes}")
+    new_frame =  results[0].plot()
 
     cv2.imshow('recording ... ',new_frame)
     out.write(new_frame)
+    frame_id+=1
     if cv2.waitKey(25) & 0xFF == ord('q'):
         print("Playback stopped by user.")
         break
