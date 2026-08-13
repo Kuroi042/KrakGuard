@@ -25,10 +25,8 @@ current_frame = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
 out = cv2.VideoWriter('out.mp4',
                 fourcc,
                 fps,(width,height) )
-dot= []
-frame_id = 0
+
 traject = {}
-previous_positions = {} # Dic for counting
 while True:
     ret, frame =  cap.read()
     if not ret :
@@ -37,7 +35,7 @@ while True:
     cv2.putText(frame, fps_text, (10,40),
                 cv2.FONT_HERSHEY_SIMPLEX,1,
                  (200,0,0,),2,cv2.LINE_AA)
-    results =  model.track(frame,persist=True) #*on the current frame
+    results =  model.track(frame,persist=True, ) #*on the current frame
     for i in (results[0].boxes):
         conf =  float(i.conf[0])
         cord =  np.array(i.xyxy[0])
