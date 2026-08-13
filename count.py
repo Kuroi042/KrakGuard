@@ -26,6 +26,11 @@ while(True):
         if track_id not in trajectorie:
             trajectorie[track_id]=[]
         trajectorie[track_id].append((centerx,centery))
+        for id , point in trajectorie.items():
+            #* point = [(centerx, centery)]
+            for j in range(1, len(point)):
+
+                cv2.line(frame, (point[j-1]), (point[j]) ,(0,225,0),1,cv2.LINE_AA)
 
         current_side = "above" if centery < line_y else "below" #*centry >liney
         if track_id in previous_side:
