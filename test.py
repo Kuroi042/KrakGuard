@@ -25,29 +25,43 @@ current_frame = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
 out = cv2.VideoWriter('out.mp4',
                 fourcc,
                 fps,(width,height) )
+dot= []
 frame_id = 0
-
+traject = {}
+previous_positions = {} # Dic for counting
 while True:
     ret, frame =  cap.read()
     if not ret :
         break
-
     fps_text =  f"FPS : {int(fps)}"
     cv2.putText(frame, fps_text, (10,40),
                 cv2.FONT_HERSHEY_SIMPLEX,1,
                  (200,0,0,),2,cv2.LINE_AA)
-
     results =  model.track(frame,persist=True) #*on the current frame
-
     for i in (results[0].boxes):
         conf =  float(i.conf[0])
-        id =  str(np.array(i.id))
         cord =  np.array(i.xyxy[0])
-        index =int(i.cls[0])
-        className =class_name[index]
-        print(f"frame {frame_id} : confidance:{conf}| className:{className}|ID:{id} |coordination{cord}:  ")
-     
+        x1,y1,x2,y2 =  cord
+        CenterX =  int((x1+x2)/2) 
+        CenterY = int((y1+y2)/2)  
+
+        track_id =  int(i.id[0])
+        if track_id not in traject:
+            traject[track_id]=[]
+        traject[track_id].append((CenterX,CenterY))
+        cv2.circle(    frame,(CenterX, CenterY),10,(0, 0, 225),-1)
+
+        for track_id , points in traject.items():
+            for j in range(1,len(points)):
+                cv2.line(
+                frame,
+                points[j - 1],
+                points[j],
+                (0, 255, 0),
+                2
+            )
     new_frame =  results[0].plot()
+   
 
     cv2.imshow('recording ... ',new_frame)
     out.write(new_frame)
