@@ -1,5 +1,6 @@
 import cv2
 import time
+import numpy as np
 from ultralytics import YOLO
 path =  "/home/kenshin/Desktop/DataProject/dvr/vid.mp4"
 model  =  YOLO("yolo11n.pt")
@@ -38,10 +39,14 @@ while True:
 
     results =  model.track(frame,persist=True) #*on the current frame
 
-    for c in results[0].boxes.cls:
-        index=int(c)
-        classes =  class_name[index]
-        print(f"frame {frame_id} | {classes}")
+    for i in (results[0].boxes):
+        conf =  float(i.conf[0])
+        id =  str(np.array(i.id))
+        cord =  np.array(i.xyxy[0])
+        index =int(i.cls[0])
+        className =class_name[index]
+        print(f"frame {frame_id} : confidance:{conf}| className:{className}|ID:{id} |coordination{cord}:  ")
+     
     new_frame =  results[0].plot()
 
     cv2.imshow('recording ... ',new_frame)
