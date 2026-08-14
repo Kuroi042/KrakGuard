@@ -10,8 +10,9 @@ trajectorie = {}
 previous_side = {}
 inn, out = 0,0
 line_y = 280
-line_top = 630
-line_bottom = 660
+line_top = 600
+line_bottom = 640
+flag = False
 while(True):
     ret, frame = cap.read() 
     frame = cv2.resize(frame, (TARGET_WIDTH, TARGET_HEIGHT))
@@ -20,7 +21,7 @@ while(True):
 
     result =  model.track(source=frame,persist=True,conf=0.25)
 
-    cv2.rectangle(frame, (0,630),(int(TARGET_WIDTH),660),(225,225,0),-1,cv2.LINE_AA)
+    cv2.rectangle(frame, (0,line_top),(int(TARGET_WIDTH),line_bottom),(225,225,0),-1,cv2.LINE_AA)
     boxes =  result[0].boxes
     if boxes is not None and len(boxes)>0:
         for i in boxes:
@@ -52,25 +53,42 @@ while(True):
             
             if track_id in previous_side:
                 old_side = previous_side[track_id]
-
+            
                 # ABOVE → ZONE → BELOW
                 if old_side == "zone" and current_side == "below":
                     if previous_side.get(f"{track_id}_start") == "above":#history checl
+                        flag = False
                         out += 1
                         print(f"ID {track_id} → OUT")
 
                 # BELOW → ZONE → ABOVE
                 elif old_side == "zone" and current_side == "above":
                     if previous_side.get(f"{track_id}_start") == "below":
+                        flag = True 
                         inn += 1
                         print(f"ID {track_id} → IN")
-
+            
                 # Remember where the object entered the zone
                 if old_side != "zone" and current_side == "zone":
+                    flag  =True
                     previous_side[f"{track_id}_start"] = old_side
-                
+            ##add circle 
+                green,red = [(0,0,255),(0,255,0)]
+                for id in previous_side:
+                    if previous_side[id] == "below":
+                        color = red
+                        cv2.circle(frame, (centerx,centery),10,color,-1, cv2.LINE_AA)
+
+                    elif previous_side[id]=="above":
+                        color=green
+                        cv2.circle(frame, (centerx,centery),10,color,-1, cv2.LINE_AA)
+
+                    else:
+                        color = green
+                        # color =red if flag==False else green
+                        cv2.circle(frame, (centerx,centery),10,color,-1, cv2.LINE_AA)
             previous_side[track_id] = current_side
-        
+
         text = f"Out:{out}----in{inn}"
         cv2.putText(frame,text, (50,50),cv2.FONT_HERSHEY_SIMPLEX,1,(0,0,255),1,cv2.LINE_AA)
 
