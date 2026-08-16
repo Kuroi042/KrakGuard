@@ -47,7 +47,7 @@ while True:
         if track_id not in traject:
             traject[track_id]=[]
         traject[track_id].append((CenterX,CenterY))
-        cv2.circle(    frame,(CenterX, CenterY),10,(0, 0, 225),-1)
+        cv2.circle(frame,(CenterX, CenterY),10,(0, 0, 225),-1)
 
         for track_id , points in traject.items():
             for j in range(1,len(points)):
