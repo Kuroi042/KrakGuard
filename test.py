@@ -2,7 +2,7 @@ import cv2
 import time
 import numpy as np
 from ultralytics import YOLO
-path =  "/home/kenshin/Desktop/DataProject/dvr/vid.mp4"
+path =  "source/vid.mp4"
 model  =  YOLO("yolo11n.pt")
 class_name = model.names #* return a dictionary of yolo class index 
 #* boxes.xyxy → WHERE
@@ -13,7 +13,7 @@ class_name = model.names #* return a dictionary of yolo class index
 
 newtime = 0
 prevtime =0
-path =  "vid.mp4"
+path =  "source/traf.mp4"
 
 cap = cv2.VideoCapture(path)
 fps = cap.get(cv2.CAP_PROP_FPS)
@@ -63,7 +63,7 @@ while True:
 
     cv2.imshow('recording ... ',new_frame)
     out.write(new_frame)
-    frame_id+=1
+    # frame_id+=1
     if cv2.waitKey(25) & 0xFF == ord('q'):
         print("Playback stopped by user.")
         break

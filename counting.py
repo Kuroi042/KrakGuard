@@ -3,6 +3,7 @@
 # cap = cv2.VideoCapture("source/traf.mp4")
 WIDTH =  1280
 import cv2
+import numpy as np
 from ultralytics import YOLO
 HEIGHT =720   
 GRACE_FRAMES=10      #above
@@ -14,13 +15,16 @@ is_in={}
 entered_from={}
 crossed = {}
 last_seen = {} #keep track of ID 
-
+classename={2:"car",3:"Motorcycle",7:"Truck", 5:"bus"}
+classes={}
 previous = None
 col=[(0,225,0),(0,0,255)]
+text = None
+
+
 def count(result, frame, inn, out):
     cv2.rectangle(frame, (0,bar[0]),(WIDTH,bar[1]),(225,0,0),5,cv2.LINE_4)
     seen_now =  set()
-
     for box in result[0].boxes:
 
             if box.id is None:
@@ -28,10 +32,13 @@ def count(result, frame, inn, out):
             x1,y1,x2,y2 = map(int,box.xyxy[0])
             centerx = int((x1+x2)/2)
             centery =  int(y2)
+            class_id  = int(box.cls[0])
             trackid =  int(box.id[0])
 
+            text= f"obj: {trackid}, {classename[class_id]}"
+            cv2.putText(frame,text,(centerx, centery),cv2.FONT_HERSHEY_COMPLEX_SMALL,1,(0,225,0),1,cv2.LINE_AA)
+            cv2.rectangle(frame, (x1,y1),(x2,y2),(225,0,0),1, cv2.LINE_AA)
             seen_now.add(trackid)
-            cv2.rectangle(frame, (x1,y1),(x2,y2),(0,0,225),1, cv2.LINE_AA)
             if centery < bar[0]:
                 current ="above"
             elif centery > bar[1]:
@@ -73,5 +80,5 @@ def count(result, frame, inn, out):
 
                 if last_seen[trackid][2]>GRACE_FRAMES:
                     del last_seen[trackid]
-
-    return frame ,inn, out
+    # print(inn, out)
+    return frame , inn, out 
