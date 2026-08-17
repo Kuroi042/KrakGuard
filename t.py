@@ -24,7 +24,7 @@ while True:
         break
     frame = cv2.resize(frame, (WIDTH,HEIGHT))
     result = model.track(frame, persist=True,classes=[2, 3, 7, 5], conf=0.25,imgsz=640)
-    cv2.rectangle(frame, (0,bar[0]),(WIDTH,bar[1]),(0,0,255),2,cv2.LINE_4)
+    cv2.rectangle(frame, (0,bar[0]),(WIDTH,bar[1]),(225,0,0),1,cv2.LINE_4)
     seen_now =  set()
     for trackid in list(last_seen.keys()):
         if trackid not in seen_now:
@@ -42,7 +42,7 @@ while True:
         trackid =  int(box.id[0])
         seen_now.add(trackid)
         # print("Seennow" , seen_now[box.id])
-        cv2.rectangle(frame, (x1,y1),(x2,y2),(255,0,0),1, cv2.LINE_AA)
+        cv2.rectangle(frame, (x1,y1),(x2,y2),(0,0,225),1, cv2.LDR_SIZE)
         # cv2.circle(frame, (centerx, centery),10,(0,0,255),-1)
         if centery < bar[0]:
             current ="above"
@@ -63,26 +63,35 @@ while True:
         #     print(f" {int(box.id)} :  { centery}-> {current}")
         if previous=="above" and current =="zone":
              entered_from[trackid]="above"
+
         elif previous=="below" and current == "zone":
              entered_from[trackid]="below"
+
         if previous == "zone" and current =="below" and entered_from.get(trackid)=="above":
             if not crossed.get(trackid, False):
                 out+=1
-                crossed[trackid]=True
-            print("counted as out")
+                crossed[trackid]="out"
         if previous ==  "zone" and current =="above" and entered_from.get(trackid)=="below":
             if not crossed.get(trackid, False):
                 inn+=1
-                crossed[trackid]=True
+                crossed[trackid]="in"
+        if crossed.get(trackid)=="in":
+            color = col[0]        
+        elif crossed.get(trackid)=="out":
+            color = col[1]
+        else:
+            color = (225,225,225)
+        cv2.circle(frame, (centerx, centery), 10, color, -1)
+
         text_out = f"in: {inn}----out: {out}"
         
         cv2.putText(frame, text_out, (50,50),cv2.FONT_HERSHEY_COMPLEX_SMALL,1,(225,0,0),1,cv2.LINE_AA)
         last_seen[trackid]=[centerx, centery,0] #zero for zero frame been missing 
-        #counter reset to 0 each time the car is detected
-        for trackid in last_seen:
-            x,y,missing = last_seen[trackid]
-            if missing>0:
-                    cv2.circle(frame, (x,y),10,(0,225,225),-1)
+        # #counter reset to 0 each time the car is detected
+        # for trackid in last_seen:
+        #     x,y,missing = last_seen[trackid]
+            # if missing>0:
+            #         cv2.circle(frame, (x,y),10,(0,225,225),1)
             
     cv2.imshow("img", frame)
     if cv2.waitKey(1) & 0xFF == ord("q"):
