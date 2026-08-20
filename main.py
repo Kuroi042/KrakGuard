@@ -9,7 +9,7 @@ HEIGHT = 720
 
 def main():
     model = YOLO("yolo11n.pt")
-    cap = cv2.VideoCapture("source/traffic.mp4")
+    cap = cv2.VideoCapture("source/traf.mp4")
     counter = Counter()
     radar =  Radar()
     while True:
@@ -17,7 +17,9 @@ def main():
         if not ret:
             break
         frame = cv2.resize(frame, (WIDTH, HEIGHT))
-        result = model.track(frame,persist=True,classes=[2, 3, 7, 5]
+        # bytetrack.yaml
+        # botsort.yaml
+        result = model.track(frame,persist=True,tracker="bytetrack.yaml",classes=[2, 3, 7, 5]
                              ,conf=0.25,
                              imgsz=640)
         frame = counter.count(result, frame)

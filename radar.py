@@ -7,7 +7,7 @@ RADAR_HEIGHT = 300
 WIDTH = 1280
 HEIGHT = 720
 LIMIT = 30
-VIOLATION_TTL = 3 #how many frames violatator stay on screen 
+VIOLATION_TTL = 10 #how many frames violatator stay on screen 
 class Radar:
     def __init__(self, fps=30, detect_every=1):
         self.position = {}
@@ -28,32 +28,35 @@ class Radar:
             centery = int(y2)
             trackid = int(i.id[0])
 
-            self.previous_pos[trackid] = self.position.get(trackid)
+            previous = self.position.get(trackid)
             self.position[trackid] = (centerx, centery)
-
-            previous = self.previous_pos[trackid]
             current = self.position[trackid]
 
             if previous is None:
                 continue
 
-            distance_px = np.linalg.norm(np.array(current) - np.array(previous))
-            meters_per_pixel = 3.5 / 140
-            distance_meter = distance_px * meters_per_pixel
-            time = self.detect_every / self.fps
-            speedkm = (distance_meter / time) * 3.6
+            distance_px = np.linalg.norm(np.array(current) - np.array(previous))#px
+            meters_per_pixel = 3.5 / 140 #ratio 3.5=140px
+            distance_meter = distance_px * meters_per_pixel#how many m per one pixel
+            time = self.detect_every / self.fps#how much time passed between two position
+            speedkm = (distance_meter / time) * 3.6 #*km/h
 
             if trackid in self.get_speed:
+                #*Exponential moving average
                 smooth_speed = self.alpha * speedkm + (1 - self.alpha) * self.get_speed[trackid]
             else:
                 smooth_speed = speedkm
             self.get_speed[trackid] = smooth_speed
 
             if smooth_speed > LIMIT:
-                old_max = self.violators[trackid][0] if trackid in self.violators else 0
+                if trackid in self.violators:
+                    old_max = self.violators[trackid][0] 
+                else: 
+                    old_max=0# default
+                # self.violators[trackid][0]==>max() | self.violators[trackid][1] ==> TLL
                 self.violators[trackid] = [max(smooth_speed, old_max), VIOLATION_TTL]
 
-                # permanent record: keep the highest speed ever recorded for this id
+                # keep the highest speed ever recorded for this id
                 prev_history_max = self.violation_history.get(trackid, 0)
                 self.violation_history[trackid] = max(smooth_speed, prev_history_max)
 
