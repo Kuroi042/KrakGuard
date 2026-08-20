@@ -13,11 +13,14 @@ class Radar:
         self.distance = 0
         self.speedkm=0
         self.get_speed={}
+        self.alpha = 0.3  #smoothing factor 
 # get the center of each 
     def radarr(self,result,frame):
         radar = np.zeros((RADAR_HEIGHT, RADAR_WIDTH, 3)
                          , dtype=np.uint8)        #canvas for dots   
         for i in result[0].boxes:
+            if i.id is None:
+                continue
             x1,y1,x2,y2  = map(int, i.xyxy[0])
             centerx = int((x1+x2)/2)
             centery =  int(y2) #bottom
@@ -28,19 +31,25 @@ class Radar:
             previous =  self.previous_pos[trackid]
             current = self.position[trackid]
             if previous is not None:    
-                self.distance =  np.linalg.norm(np.array(current) - np.array(previous))
+                distance_px =  np.linalg.norm(np.array(current) - np.array(previous))
                 # print(trackid,self.distance)#pixel/frame*0
-            meters_per_pixel = 3.5 / 140
-            distance_meter =  self.distance*meters_per_pixel
-            time  = 1/self.fps #seconds/frame*0
-            speed =  self.distance/time #pixel/sec
-            #* convert to to (km/s)
-            speed_mps =  distance_meter/time
-            self.speedkm =  speed_mps*3.6
+                meters_per_pixel = 3.5 / 140
+                distance_meter =  distance_px*meters_per_pixel
+                time  = 1/self.fps #seconds/frame*0
+                speedkm =  (distance_meter/time)*3.6 #pixel/sec
 
-            self.get_speed[trackid]= self.speedkm
-            # print(self.get_speed)
-            cv2.putText(frame, f"{self.speedkm:.0f} km/h", (x1, y1 - 10),
+
+                # print(self.get_speed)
+                #* exponential moving average (EMA)
+                if trackid in self.get_speed:
+                    smooth_speed = self.alpha*speedkm+(1-self.alpha)*self.get_speed[trackid]
+                else:
+                    smooth_speed= speedkm
+                self.get_speed[trackid] =  smooth_speed
+
+
+            
+                cv2.putText(frame, f"{smooth_speed:.0f} km/h", (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
 
 
