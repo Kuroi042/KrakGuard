@@ -7,7 +7,6 @@ from radar import Radar
 WIDTH = 1280
 HEIGHT = 720
 
-
 def main():
     model = YOLO("yolo11n.pt")
     cap = cv2.VideoCapture("source/traffic.mp4")
@@ -24,7 +23,7 @@ def main():
         frame = counter.count(result, frame)
         radar_img =  radar.radarr(result,frame)
         cv2.imshow("img", frame)
-        cv2.imshow("radar", radar_img)
+        # cv2.imshow("radar", radar_img)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
