@@ -47,7 +47,7 @@ class Counter:
 
             seen_now.add(trackid)
             text = f"obj: {trackid}, {CLASS_NAMES[class_id]}"
-            cv2.putText(frame,text,(centerx, centery),cv2.FONT_HERSHEY_COMPLEX_SMALL,1,GREEN,1,cv2.LINE_AA)
+            cv2.putText(frame,text,(centerx, centery),cv2.FONT_HERSHEY_SIMPLEX,0.5,GREEN,1,cv2.LINE_AA)
             cv2.rectangle(frame,(x1, y1),(x2, y2),(0, 225, 0),2,cv2.LINE_AA)
             if centery < BAR[0]:
                 current = "above"
