@@ -10,8 +10,11 @@ class Radar:
         self.position={}
         self.fps= 30
         self.previous_pos={}
+        self.distance = 0
+        self.speedkm=0
+        self.get_speed={}
 # get the center of each 
-    def radarr(self,result):
+    def radarr(self,result,frame):
         radar = np.zeros((RADAR_HEIGHT, RADAR_WIDTH, 3)
                          , dtype=np.uint8)        #canvas for dots   
         for i in result[0].boxes:
@@ -25,12 +28,23 @@ class Radar:
             previous =  self.previous_pos[trackid]
             current = self.position[trackid]
             if previous is not None:    
-                distance =  np.linalg.norm(np.array(current) - np.array(previous))
-                print(trackid,distance)
-            # distance = self.current-self.previous
-            # print(trackid ,distance)
-            # centerx in width 
-            # Radar_x in RADAR_WIDTH
+                self.distance =  np.linalg.norm(np.array(current) - np.array(previous))
+                # print(trackid,self.distance)#pixel/frame*0
+            meters_per_pixel = 3.5 / 140
+            distance_meter =  self.distance*meters_per_pixel
+            time  = 1/self.fps #seconds/frame*0
+            speed =  self.distance/time #pixel/sec
+            #* convert to to (km/s)
+            speed_mps =  distance_meter/time
+            self.speedkm =  speed_mps*3.6
+
+            self.get_speed[trackid]= self.speedkm
+            # print(self.get_speed)
+            cv2.putText(frame, f"{self.speedkm:.0f} km/h", (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2, cv2.LINE_AA)
+
+
+            # print( self.speedkm)
             #la regle de 3
             radar_x =  int((centerx*RADAR_WIDTH )/WIDTH) 
             radar_y =  int((centery*RADAR_HEIGHT)/HEIGHT)

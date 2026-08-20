@@ -22,10 +22,10 @@ def main():
                              ,conf=0.25,
                              imgsz=640)
         frame = counter.count(result, frame)
-        radar_img =  radar.radarr(result)
+        radar_img =  radar.radarr(result,frame)
         cv2.imshow("img", frame)
         cv2.imshow("radar", radar_img)
-        
+
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
     cap.release()

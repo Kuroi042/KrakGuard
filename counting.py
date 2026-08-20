@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 from ultralytics import YOLO
-
+from radar import Radar 
 WIDTH = 1280
 HEIGHT = 720
 
@@ -18,7 +18,7 @@ CLASS_NAMES = {
 GREEN = (0, 225, 0)
 RED = (0, 0, 255)
 
-
+radar =  Radar()
 class Counter:
 
     def __init__(self):
