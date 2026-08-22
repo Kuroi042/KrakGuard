@@ -1,9 +1,10 @@
 from ultralytics import YOLO
 import cv2
-
+import numpy as np
 from counting import Counter
 from radar import Radar
-
+import mss
+frame = 0
 WIDTH = 1280
 HEIGHT = 720
 x1, y1, x2, y2 = 5, 120, 100, 155
@@ -13,21 +14,24 @@ def MouseControl(event, x, y, flags, param):
 
     radar = param["radar"]
     counter = param["counter"]
- 
-    global mouse_pos
+    global mouse_pos 
     if event == cv2.EVENT_MOUSEMOVE:
         mouse_pos = (x, y)
     elif event ==cv2.EVENT_LBUTTONDOWN:
         if (5<x<100) and (120<y<155):#cap
-            print("CAPTURE")
+            frame =  param["frame"]
+
+            if frame is not None:
+                success =cv2.imwrite("Capture_saved.png",frame)
+                print("Capture Saved !! ", frame)
+                print("Capture:", success)
+                print("Shape:", frame.shape)
+                print("Min:", frame.min())
+                print("Max:", frame.max())
         elif (5<x<100) and (165<y<200):#radar
-            radar.btn =not radar.btn
-            print(f"RADAR XXXXXXXXXXXXXXXXXXXXXXXXXX {radar.btn}")
- 
+            radar.btn =not radar.btn 
         elif (5<x<100) and (210<y<245):#counting
             counter.btn= not counter.btn
-            # print(f"Counter XXXXXXXXXXXXXXXXXXXXXXXXXXXXX  {counter.btn}")
- 
         elif (5<x<100) and (255<y<290):#ocr
             print("OCR")
  
@@ -66,12 +70,16 @@ def main():
         raise IOError("Could not open video")
     counter = Counter()
     radar = Radar()
+    mouse_data={
+        "radar":radar, "counter":counter,"frame":None
+    }
     cv2.namedWindow("img")
-    cv2.setMouseCallback("img", MouseControl, {"radar": radar,"counter":counter})
+    cv2.setMouseCallback("img", MouseControl, mouse_data)
     while True:
         ret, frame = cap.read()
         if not ret:
             break
+        # mouse_data["frame"] = frame.copy()
         frame = cv2.resize(frame,(WIDTH, HEIGHT))
         result = model.track(frame,persist=True,tracker="bytetrack.yaml",classes=[2, 3, 7, 5],conf=0.25,imgsz=640)
         Button(frame,"Capture",5, 120,100, 155,mouse_pos)
@@ -82,10 +90,9 @@ def main():
         radar.radarr(result,frame)
         cv2.circle(frame,mouse_pos,4,(0, 0, 255),-1)
 
-
+        mouse_data["frame"] = frame.copy()
         cv2.imshow("img",frame)
 
-        # Press Q to quit
         if cv2.waitKey(1) & 0xFF == ord("q"):
             break
 
