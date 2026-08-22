@@ -10,6 +10,7 @@ LIMIT = 30
 VIOLATION_TTL = 10 #how many frames violatator stay on screen 
 class Radar:
     def __init__(self, fps=30, detect_every=1):
+        self.btn = False
         self.position = {}
         self.fps = fps
         self.previous_pos = {}
@@ -20,56 +21,60 @@ class Radar:
         self.violation_history = {}  # permanent log, never deleted
 
     def radarr(self, result, frame):
-        for i in result[0].boxes:
-            if i.id is None:
-                continue
-            x1, y1, x2, y2 = map(int, i.xyxy[0])
-            centerx = int((x1 + x2) / 2)
-            centery = int(y2)
-            trackid = int(i.id[0])
+        print(f"radar xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx {self.btn}")
+        if self.btn == False:
+            return frame
+        else:  
+            for i in result[0].boxes:
+                if i.id is None:
+                    continue
+                x1, y1, x2, y2 = map(int, i.xyxy[0])
+                centerx = int((x1 + x2) / 2)
+                centery = int(y2)
+                trackid = int(i.id[0])
 
-            previous = self.position.get(trackid)
-            self.position[trackid] = (centerx, centery)
-            current = self.position[trackid]
+                previous = self.position.get(trackid)
+                self.position[trackid] = (centerx, centery)
+                current = self.position[trackid]
 
-            if previous is None:
-                continue
+                if previous is None:
+                    continue
 
-            distance_px = np.linalg.norm(np.array(current) - np.array(previous))#px
-            meters_per_pixel = 3.5 / 140 #ratio 3.5=140px
-            distance_meter = distance_px * meters_per_pixel#how many m per one pixel
-            time = self.detect_every / self.fps#how much time passed between two position
-            speedkm = (distance_meter / time) * 3.6 #*km/h
+                distance_px = np.linalg.norm(np.array(current) - np.array(previous))#px
+                meters_per_pixel = 3.5 / 140 #ratio 3.5=140px
+                distance_meter = distance_px * meters_per_pixel#how many m per one pixel
+                time = self.detect_every / self.fps#how much time passed between two position
+                speedkm = (distance_meter / time) * 3.6 #*km/h
 
-            if trackid in self.get_speed:
-                #*Exponential moving average
-                smooth_speed = self.alpha * speedkm + (1 - self.alpha) * self.get_speed[trackid]
-            else:
-                smooth_speed = speedkm
-            self.get_speed[trackid] = smooth_speed
+                if trackid in self.get_speed:
+                    #*Exponential moving average
+                    smooth_speed = self.alpha * speedkm + (1 - self.alpha) * self.get_speed[trackid]
+                else:
+                    smooth_speed = speedkm
+                self.get_speed[trackid] = smooth_speed
 
-            if smooth_speed > LIMIT:
-                if trackid in self.violators:
-                    old_max = self.violators[trackid][0] 
-                else: 
-                    old_max=0# default
-                # self.violators[trackid][0]==>max() | self.violators[trackid][1] ==> TLL
-                self.violators[trackid] = [max(smooth_speed, old_max), VIOLATION_TTL]
+                if smooth_speed > LIMIT:
+                    if trackid in self.violators:
+                        old_max = self.violators[trackid][0] 
+                    else: 
+                        old_max=0# default
+                    # self.violators[trackid][0]==>max() | self.violators[trackid][1] ==> TLL
+                    self.violators[trackid] = [max(smooth_speed, old_max), VIOLATION_TTL]
 
-                # keep the highest speed ever recorded for this id
-                prev_history_max = self.violation_history.get(trackid, 0)
-                self.violation_history[trackid] = max(smooth_speed, prev_history_max)
+                    # keep the highest speed ever recorded for this id
+                    prev_history_max = self.violation_history.get(trackid, 0)
+                    self.violation_history[trackid] = max(smooth_speed, prev_history_max)
 
-            color = (0, 0, 255) if trackid in self.violators else (0, 255, 0)
-            cv2.putText(frame, f"{smooth_speed:.0f} km/h", (x1, y1 - 10),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2, cv2.LINE_AA)
+                color = (0, 0, 255) if trackid in self.violators else (0, 255, 0)
+                cv2.putText(frame, f"{smooth_speed:.0f} km/h", (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2, cv2.LINE_AA)
 
-        for trackid in list(self.violators.keys()):
-            self.violators[trackid][1] -= 1
-            if self.violators[trackid][1] <= 0:
-                del self.violators[trackid]
+            for trackid in list(self.violators.keys()):
+                self.violators[trackid][1] -= 1
+                if self.violators[trackid][1] <= 0:
+                    del self.violators[trackid]
 
-        self.radar_fix(frame)
+            self.radar_fix(frame)
 
     def radar_fix(self, frame):
         panel_x, panel_y = WIDTH - 250, 20
@@ -90,3 +95,4 @@ class Radar:
         if self.violation_history:
             with open("data.json", "w") as f:
                 json.dump(self.violation_history, f, indent=4)
+        return frame

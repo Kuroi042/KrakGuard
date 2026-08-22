@@ -10,11 +10,30 @@ x1, y1, x2, y2 = 5, 120, 100, 155
 mouse_pos = (0, 0)
 
 def MouseControl(event, x, y, flags, param):
+
+    radar = param["radar"]
+    counter = param["counter"]
+ 
     global mouse_pos
     if event == cv2.EVENT_MOUSEMOVE:
         mouse_pos = (x, y)
-
+    elif event ==cv2.EVENT_LBUTTONDOWN:
+        if (5<x<100) and (120<y<155):#cap
+            print("CAPTURE")
+        elif (5<x<100) and (165<y<200):#radar
+            radar.btn =not radar.btn
+            print(f"RADAR XXXXXXXXXXXXXXXXXXXXXXXXXX {radar.btn}")
+ 
+        elif (5<x<100) and (210<y<245):#counting
+            counter.btn= not counter.btn
+            # print(f"Counter XXXXXXXXXXXXXXXXXXXXXXXXXXXXX  {counter.btn}")
+ 
+        elif (5<x<100) and (255<y<290):#ocr
+            print("OCR")
+ 
+ 
 def Button(frame, text, x1, y1, x2, y2, mouse_pos):
+
     hover = (x1 <= mouse_pos[0] <= x2 and y1 <= mouse_pos[1] <= y2)
 
     if hover:
@@ -48,7 +67,7 @@ def main():
     counter = Counter()
     radar = Radar()
     cv2.namedWindow("img")
-    cv2.setMouseCallback("img", MouseControl)
+    cv2.setMouseCallback("img", MouseControl, {"radar": radar,"counter":counter})
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -59,8 +78,8 @@ def main():
         Button(frame,"Radar",5, 165,100, 200,mouse_pos)
         Button(frame,"Counting",5, 210,100, 245,mouse_pos)
         Button(frame,"OCR",5, 255,100, 290,mouse_pos)
-        frame = counter.count(result,frame)
-        radar_img = radar.radarr(result,frame)
+        counter.count(result,frame)
+        radar.radarr(result,frame)
         cv2.circle(frame,mouse_pos,4,(0, 0, 255),-1)
 
 
