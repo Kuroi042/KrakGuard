@@ -32,7 +32,9 @@ class Counter:
 
     def count(self, result, frame):
 
-        cv2.rectangle(frame,(0, BAR[0]),(WIDTH, BAR[1]),(225, 0, 0),5)
+        overlay =  frame.copy()
+        cv2.rectangle(overlay,(0, BAR[0]),(WIDTH, BAR[1]),(225, 0, 0),-1)
+        cv2.addWeighted(overlay,0.5,frame,0.5,0,frame)
         seen_now = set()
         for box in result[0].boxes:
             if box.id is None:
