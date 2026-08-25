@@ -4,15 +4,22 @@ import numpy as np
 from counting import Counter
 from radar import Radar
 import time
-
+# from tools import Tools
 frame = 0
 WIDTH = 1280
 HEIGHT = 720
 x1, y1, x2, y2 = 5, 120, 100, 155
 mouse_pos = (0, 0)
+drawing = False
+ix, iy, = -1, -1 
+fx, fy= -1, -1 
+draw = 0
 
-def MouseControl(event, x, y, flags, param):
-
+def select_region(event, x, y, flags, param):
+    global ix, iy, fx, fy, drawing, img, backup_img, draw
+    frame  = param["frame"]
+    backup_img =  frame.copy()
+        # tools =  param["tools"]
     radar = param["radar"]
     counter = param["counter"]
     global mouse_pos 
@@ -30,7 +37,38 @@ def MouseControl(event, x, y, flags, param):
         elif (5<x<100) and (210<y<245):#counting
             counter.btn= not counter.btn
         elif (5<x<100) and (255<y<290):#ocr
-            print("OCR")
+        #     tools.btn =  not tools.btn
+            if event == cv2.EVENT_LBUTTONDOWN and draw == 0: #red == 0
+                drawing = True
+                ix, iy = x, y
+            if event == cv2.EVENT_LBUTTONDOWN and draw == 1: #blue = -1
+                draw = 1
+                drawing = True
+                ix, iy = x, y
+            elif event == cv2.EVENT_MOUSEMOVE:
+                if drawing:
+                    frame = backup_img.copy() #reset the image avoid multi drawinf
+                    if draw == 0:
+                        cv2.rectangle(frame, (ix, iy), (x, y), (0, 0, 225), 2)
+                    elif draw == 1:
+                        cv2.rectangle(frame, (ix, iy), (x, y), (225, 0, 0), 2)
+
+            elif event == cv2.EVENT_LBUTTONUP and draw == 0:#red 0
+                drawing = False
+                fx, fy = x, y
+                cv2.rectangle(backup_img, (ix, iy), (fx, fy), ( 0, 0, 225), 2)
+                frame = backup_img.copy()
+                draw= 1
+
+            elif event == cv2.EVENT_LBUTTONUP and draw == 1:#blue 1
+                jx, jy = x, y
+                drawing = False
+                cv2.rectangle(backup_img, (ix, iy), (jx, jy ), ( 225, 0, 0), 2)
+                frame = backup_img.copy()
+                draw=0
+
+
+
  
  
 def Button(frame, text, x1, y1, x2, y2, mouse_pos):
@@ -66,21 +104,25 @@ def main():
         raise IOError("Could not open video")
     counter = Counter()
     radar = Radar()
+    # tools=  Tools()
     mouse_data={
         "radar":radar, "counter":counter,"frame":None
     }
     cv2.namedWindow('img')
-    cv2.setMouseCallback('img', MouseControl, mouse_data)
+
+
     while True:
         ret, frame = cap.read()
         if not ret:
             break
         frame = cv2.resize(frame,(WIDTH, HEIGHT))
         result = model.track(frame,persist=True,tracker="bytetrack.yaml",classes=[2, 3, 7, 5],conf=0.25,imgsz=640)
+        # cv2.setMouseCallback('img', MouseControl, mouse_data)
+        cv2.setMouseCallback('img', select_region,mouse_data)
         Button(frame,"Capture",5, 120,100, 155,mouse_pos)
         Button(frame,"Radar",5, 165,100, 200,mouse_pos)
         Button(frame,"Counting",5, 210,100, 245,mouse_pos)
-        Button(frame,"OCR",5, 255,100, 290,mouse_pos)
+        Button(frame,"SetRegion",5, 255,100, 290,mouse_pos)
         current_time  =  time.localtime()
         formatted_time = time.strftime("%H:%M:%S", current_time)
         cv2.putText(frame, str(formatted_time),(1280-100,30),5,1,(0,0,0),1, cv2.LINE_AA)

@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 from radar import Radar 
-from tools import select_region
+# from tools import Tools
 WIDTH = 1280
 HEIGHT = 720
 
@@ -39,7 +39,7 @@ class Counter:
         else:
             overlay =  frame.copy()
             
-            cv2.rectangle(overlay,(0, BAR[0]),(WIDTH, BAR[1]),(225, 0, 0),-1)
+            # cv2.rectangle(overlay,(0, BAR[0]),(WIDTH, BAR[1]),(225, 0, 0),-1)
             cv2.addWeighted(overlay,0.5,frame,0.5,0,frame)
             seen_now = set()
 

@@ -1,10 +1,9 @@
 import cv2
 import numpy as np
-#  and justice for al
+#  and justice for all
 drawing = False
 ix, iy, = -1, -1 
 fx, fy= -1, -1 
-img = cv2.imread("test.png")
 backup_img = img.copy()
 draw = 0
 
@@ -19,7 +18,6 @@ def select_region(event, x, y, flags, param):
     ix, iy = x, y
   elif event == cv2.EVENT_MOUSEMOVE:
     if drawing:
- 
       img = backup_img.copy() #reset the image avoid multi drawinf
       if draw == 0:
         cv2.rectangle(img, (ix, iy), (x, y), (0, 0, 225), 2)
@@ -39,19 +37,10 @@ def select_region(event, x, y, flags, param):
       cv2.rectangle(backup_img, (ix, iy), (jx, jy ), ( 225, 0, 0), 2)
       img = backup_img.copy()
       draw=0
-  if draw==0:
-    return
-
-
-
-
- 
-
-cv2.namedWindow("Image Window")
 mouse_data={
        "frame":None
     }
-cv2.setMouseCallback("Image Window", select_region, mouse_data)
+# cv2.setMouseCallback("Image Window", select_region, mouse_data)
 
 while True:
   cv2.imshow("Image Window", img)
