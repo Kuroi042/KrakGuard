@@ -3,7 +3,8 @@ import cv2
 import numpy as np
 from counting import Counter
 from radar import Radar
-import mss
+import time
+
 frame = 0
 WIDTH = 1280
 HEIGHT = 720
@@ -19,15 +20,11 @@ def MouseControl(event, x, y, flags, param):
         mouse_pos = (x, y)
     elif event ==cv2.EVENT_LBUTTONDOWN:
         if (5<x<100) and (120<y<155):#cap
-            frame =  param["frame"]
-
+            frame= param["frame"]
             if frame is not None:
-                success =cv2.imwrite("Capture_saved.png",frame)
-                print("Capture Saved !! ", frame)
-                print("Capture:", success)
-                print("Shape:", frame.shape)
-                print("Min:", frame.min())
-                print("Max:", frame.max())
+                capture = frame.copy()
+                cv2.putText(capture, "Capture_Saved!! ",(640,50),5,1,(0,0,0),1, cv2.LINE_AA)
+                cv2.imwrite("Capture_saved.png",capture)
         elif (5<x<100) and (165<y<200):#radar
             radar.btn =not radar.btn 
         elif (5<x<100) and (210<y<245):#counting
@@ -63,7 +60,6 @@ def Button(frame, text, x1, y1, x2, y2, mouse_pos):
 
 
 def main():
-
     model = YOLO("yolo11n.pt")
     cap = cv2.VideoCapture("source/traf.mp4")
     if not cap.isOpened():
@@ -73,24 +69,27 @@ def main():
     mouse_data={
         "radar":radar, "counter":counter,"frame":None
     }
-    cv2.namedWindow("img")
-    cv2.setMouseCallback("img", MouseControl, mouse_data)
+    cv2.namedWindow('img')
+    cv2.setMouseCallback('img', MouseControl, mouse_data)
     while True:
         ret, frame = cap.read()
         if not ret:
             break
-        # mouse_data["frame"] = frame.copy()
         frame = cv2.resize(frame,(WIDTH, HEIGHT))
         result = model.track(frame,persist=True,tracker="bytetrack.yaml",classes=[2, 3, 7, 5],conf=0.25,imgsz=640)
         Button(frame,"Capture",5, 120,100, 155,mouse_pos)
         Button(frame,"Radar",5, 165,100, 200,mouse_pos)
         Button(frame,"Counting",5, 210,100, 245,mouse_pos)
         Button(frame,"OCR",5, 255,100, 290,mouse_pos)
+        current_time  =  time.localtime()
+        formatted_time = time.strftime("%H:%M:%S", current_time)
+        cv2.putText(frame, str(formatted_time),(1280-100,30),5,1,(0,0,0),1, cv2.LINE_AA)
+
         counter.count(result,frame)
         radar.radarr(result,frame)
+        mouse_data["frame"] = frame.copy()
         cv2.circle(frame,mouse_pos,4,(0, 0, 255),-1)
 
-        mouse_data["frame"] = frame.copy()
         cv2.imshow("img",frame)
 
         if cv2.waitKey(1) & 0xFF == ord("q"):

@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from ultralytics import YOLO
 from radar import Radar 
+from tools import select_region
 WIDTH = 1280
 HEIGHT = 720
 
@@ -36,9 +37,8 @@ class Counter:
         if self.btn== False:
             return frame
         else:
-            print(f"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx = {self.btn}")
-
             overlay =  frame.copy()
+            
             cv2.rectangle(overlay,(0, BAR[0]),(WIDTH, BAR[1]),(225, 0, 0),-1)
             cv2.addWeighted(overlay,0.5,frame,0.5,0,frame)
             seen_now = set()
@@ -59,12 +59,10 @@ class Counter:
                 text = f"obj: {trackid}, {CLASS_NAMES[class_id]}"
                 cv2.putText(frame,text,(centerx, centery),cv2.FONT_HERSHEY_SIMPLEX,0.5,GREEN,1,cv2.LINE_AA)
                 cv2.rectangle(frame,(x1, y1),(x2, y2),(0, 225, 0),2,cv2.LINE_AA)
-                if centery < BAR[0]:
+                if centery < BAR[0]:#500 up in  T
                     current = "above"
-
-                elif centery > BAR[1]:
+                elif centery > BAR[1]:#600 down out v
                     current = "below"
-
                 else:
                     current = "zone"
 
@@ -106,15 +104,6 @@ class Counter:
 
             text_out = f"IN: {self.inn}   OUT: {self.out}"
 
-            cv2.putText(
-                frame,
-                text_out,
-                (50, 50),
-                cv2.FONT_HERSHEY_COMPLEX_SMALL,
-                1,
-                (225, 0, 0),
-                1,
-                cv2.LINE_AA
-            )
+            cv2.putText(frame,text_out,(50, 50),cv2.FONT_HERSHEY_COMPLEX_SMALL,1,(225, 0, 0),1,cv2.LINE_AA)
 
             return frame
